@@ -88,9 +88,6 @@ class Sampler_Trainer():
             print("Train Loss: {:.6f}".format(epoch_loss))
 
 
-            #if epoch!=0 and epoch<5:
-            #    continue
-            #self.draw_hist(self.model, self.train_gen, self.valid_gen)
             res_dic =  self.evaluate(self.model, self.train_gen, self.valid_gen)
 
             if res_dic["Recall(k=20)"]>=self._best_metrics:

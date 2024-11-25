@@ -54,10 +54,6 @@ class MF(BaseModel):
         if user_vec.dim()==2:
             user_vec = user_vec.unsqueeze(1)
 
-        # mixing
-        #mix_item_vec,weight = self.mixing(pos_item_vec[:,0,:], neg_item_vec[:,0,:])
-        #pos_item_vec = mix_item_vec
-
         pos_y_pred = torch.bmm(pos_item_vec, user_vec.permute(0,2,1)).squeeze(-1)  # [batch_size, num_pos+1]
         neg_y_pred = torch.bmm(neg_item_vec, user_vec.permute(0,2,1)).squeeze(-1)  # [batch_size, num_neg+1]
 
@@ -79,12 +75,5 @@ class MF(BaseModel):
 
     def get_user_item_embedding(self):
         return self.user_embedding.weight, self.item_embedding.weight
-    """
-    @torch.no_grad()
-    def inference(self, users, items):
-        user_vec = self.user_embedding(users)
-        item_vec = self.item_embedding(items)
-        return (user_vec * item_vec).sum(-1)
-    """
 
 

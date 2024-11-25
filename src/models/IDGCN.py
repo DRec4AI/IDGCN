@@ -1,8 +1,3 @@
-'''
-Created on December 1, 2023
-@author: yahong lian
-'''
-
 import torch
 import torch.nn as nn
 from src.models.base_model import BaseModel
@@ -109,104 +104,9 @@ class IDGCN(BaseModel):
 
 
 
-    # def forward(self, user, pos_item, neg_item):
-    #     if user.ndim==1:
-    #         user = user.unsqueeze(1)
-    #     if pos_item.ndim==1:
-    #         pos_item = pos_item.unsqueeze(1)
-    #     if neg_item.ndim==1:
-    #         neg_item = neg_item.unsqueeze(1)
-    #
-    #     self.user_embedding, self.item_embedding = self.gcn(self.user_embed.weight,
-    #                                           self.item_embed.weight,
-    #                                           edge_dropout=False,
-    #                                           mess_dropout=0.5)  #original 0.2
-    #
-    #     self.batch_embeds = [self.user_embed(user), self.item_embed(pos_item), self.item_embed(neg_item)]
-    #     u_e = self.user_tower(user)
-    #     pos_e = self.item_tower(pos_item)
-    #     neg_e = self.item_tower(neg_item)
-    #     return {"embeds": self.batch_embeds,
-    #             "user_vec": u_e, "pos_item_vec": pos_e, "neg_item_vec": neg_e}
-    """version 1"""
-    # def forward(self, user, pos_item, neg_item, neighbor, cate_neigbor):
-    #     self.user_embedding, self.item_embedding = self.propagate(
-    #         self.mat,
-    #         self.user_embed.weight,
-    #         self.item_embed.weight,
-    #         mess_dropout_rate=self.mess_dropout_rate)
-    #
-    #     diverse_user_embedding = torch.zeros((user.shape[0], self.emb_size)).to(self.device)
-    #     for idx, iid in enumerate(neighbor):
-    #         neighbor_emb = self.item_embedding[iid]
-    #         x = self.user_embedding[user][idx] - neighbor_emb
-    #         dis = LA.vector_norm(x, ord=2, dim=1)
-    #         #attention_score = F.softmax(dis)
-    #         #print(attention_score)
-    #         ####acc_attention_score = F.softmax(1 - dis)
-    #         ##### self.user_embedding[user][idx] = torch.sum(neighbor_emb * acc_attention_score.reshape(-1, 1), dim=0)
-    #         diverse_user_embedding[idx] = torch.sum(neighbor_emb * dis.reshape(-1, 1),dim=0)/self.emb_size  ####01.10注释
-    #
-    #     user_e = self.user_tower(user)
-    #     pos_e = self.item_tower(pos_item)
-    #     neg_e = self.item_tower(neg_item)
-    #
-    #     self.batch_embeds = [self.user_embed(user), self.item_embed(pos_item), self.item_embed(neg_item)]
-    #     diverse_mean = torch.sum(torch.abs(user_e - diverse_user_embedding), dim=1)/self.emb_size
-    #
-    #     return {"embeds": self.batch_embeds, 'weight': diverse_mean,
-    #             "user_vec": user_e, "user_diverse": diverse_user_embedding, "pos_item_vec": pos_e, "neg_item_vec": neg_e}
 
-    # def fill_neighbor_list(self, input_list, fillvalue):
-    #     my_len = [len(k) for k in input_list]
-    #     max_len = max(my_len)
-    #     result = []
-    #     for my_list in input_list:
-    #         if len(my_list) < max_len:
-    #             for i in range(max_len - len(my_list)):
-    #                 my_list.append(fillvalue)
-    #         result.append(my_list)
-    #     return my_len, max_len, result
-
-
-    # """version 2"""
-    # def forward(self, user, pos_item, neg_item, neighbor=None, cate_neigbor=None):
-    #     user_propagate, self.item_embedding = self.propagate2(
-    #         self.mat,
-    #         self.user_embed.weight,
-    #         self.item_embed.weight,
-    #         mess_dropout_rate=self.mess_dropout_rate)
-    #     # user_propagate = self.user_embedding.clone()
-    #     user_mean = user_propagate[user]
-    #
-    #     pdist = nn.PairwiseDistance(p=2)
-    #     score = torch.tensor([]).to(self.device)
-    #     # diverse_user_embedding = torch.zeros((user.shape[0], self.emb_size)).to(self.device)
-    #     # for idx, iid in enumerate(neighbor):
-    #     for batch_ndx, sample in enumerate(self.cf_dataloader):
-    #         index, item = sample.t()   #item, user
-    #         score = torch.cat([score, pdist(self.item_embedding[item], user_propagate[index])])
-    #     score_mat = torch.sparse.FloatTensor(torch.LongTensor([self.index, self.item__]).to(self.device),
-    #                                          score, size=self.sparse_interactions.size())
-    #     soft_score_mat = torch.sparse.softmax(score_mat, dim=1)
-    #     del score_mat
-    #     self.user_embedding = torch.sparse.mm(soft_score_mat, self.item_embedding)
-    #     del soft_score_mat
-    #     # self.user_embedding = user_agg   # diversified user embedding
-    #
-    #     user_e = self.user_tower(user)
-    #     pos_e = self.item_tower(pos_item)
-    #     neg_e = self.item_tower(neg_item)
-    #
-    #     self.batch_embeds = [self.user_embed(user), self.item_embed(pos_item), self.item_embed(neg_item)]
-    #     diverse_mean = torch.sum(torch.abs(user_e - user_mean), dim=1)   #/ self.emb_size
-    #     diverse_mean = torch.tanh(diverse_mean)
-    #
-    #     return {"embeds": self.batch_embeds, 'weight': diverse_mean,
-    #             "user_vec": user_mean, "user_diverse": user_e, "pos_item_vec": pos_e, "neg_item_vec": neg_e}
 
     """version 3"""
-
     def forward(self, user, pos_item, neg_item, neighbor=None, cate_neigbor=None):
         self.user_embedding, self.item_embedding = self.propagate2(
             self.mat,
@@ -240,25 +140,6 @@ class IDGCN(BaseModel):
         return {"embeds": self.batch_embeds, 'weight': diverse_mean,
                 "user_vec": user_e, "user_diverse": user_diverse, "pos_item_vec": pos_e, "neg_item_vec": neg_e}
 
-
-
-
-
-
-    # def propagate(self, adj, user_emb, item_emb, mess_dropout_rate=0.5):
-    #     ego_embeddings = torch.cat([user_emb, item_emb], dim=0)
-    #     ego_embeddings = nn.Dropout(p=mess_dropout_rate)(ego_embeddings)   ##new added
-    #     all_embeddings = [ego_embeddings]
-    #     for k in range(1, self.n_layers+1):
-    #         if adj.is_sparse is True:
-    #             ego_embeddings = torch.sparse.mm(adj, ego_embeddings)
-    #         else:
-    #             ego_embeddings = torch.mm(adj, ego_embeddings)
-    #         all_embeddings += [ego_embeddings]
-    #     all_embeddings = torch.stack(all_embeddings, dim=1)
-    #     all_embeddings = torch.mean(all_embeddings, dim=1)
-    #     u_g_embeddings, i_g_embeddings = torch.split(all_embeddings, [self.n_users, self.n_items], dim=0)
-    #     return u_g_embeddings, i_g_embeddings
 
     def _sparse_dropout(self, x, rate=0.5):
         noise_shape = x._nnz()

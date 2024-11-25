@@ -184,11 +184,6 @@ class TrainGenerator(DataLoader):
                 user_diverse_weight[u] = 0
         d_weight = list(user_diverse_weight.values())
 
-        # ####new added normalized diverse weight
-        # max_ = max(d_weight)
-        # min_ = min(d_weight)
-        # normalized_d_weight = [(x-min_)/(max_-min_) for x in d_weight]
-        # return torch.tensor(normalized_d_weight)
         return torch.tensor(d_weight)
 
     def get_user_entropy(self):
@@ -198,10 +193,7 @@ class TrainGenerator(DataLoader):
             stat = np.unique(np.array(stat), return_counts=True)[1]
             entropy_u = entropy(stat)
             user_entropy_weight[u] = entropy_u
-        # d_weight = list(user_diverse_weight.values())
-        # max_ = max(d_weight)
-        # min_ = min(d_weight)
-        # normalized_d_weight = [(x - min_) / (max_ - min_) for x in d_weight]
+
         return torch.tensor(list(user_entropy_weight.values()))
 
 
@@ -242,17 +234,7 @@ class TrainGenerator(DataLoader):
                                                 size=(self.num_samples, self.num_neg),
                                                 replace=True)
             self.dataset.neg_items = neg_item_indexes   #original
-        #     neg_item = np.hstack((neg_item_indexes, neg_item))
-        #
-        #     #####self.dataset.all_items = np.hstack([self.dataset.items.reshape(-1, 1),neg_item_indexes])
-        # if self.mode=="diverse":
-        #     for i in range(0,4):
-        #         sampled_item_index = np.random.choice(self.new_item2cate[i], size=(self.num_samples, 2), replace=True)
-        #         neg_item = np.hstack((sampled_item_index, neg_item))
-        #     neg_item = np.delete(neg_item, -1, axis=1)
-        # else:
-        #     neg_item = np.delete(neg_item, -1, axis=1)
-        # self.dataset.neg_items = neg_item
+
         tqdm.write("negative sampling.")
 
 
@@ -411,9 +393,8 @@ class TestGenerator(object):
 
         self.user2items_dict = get_user2items_dict(user_dataset.data_dict)
 
-        # group test dataset
-        #user_group_dataset = TestDataset(data_path, col_name="user_id", usecols=["user_id", "item_id", "label", "group_id"])
-        #self.user2items_group_dict = get_user2items_group_dict(user_group_dataset.data_dict)
+
+
         self.user2items_group_dict = None
 
         # pick users of unique query_index
@@ -430,17 +411,9 @@ class TestGenerator(object):
                                       shuffle=shuffle, num_workers=0)
 
 def data_generator(model_name, train_data_path, valid_data_path, item_corpus_path, test_data_path, batch_size=256, num_negs=None,item_cate_dict=dict(),new_item2cate=[], mode="", **kwargs):
-    # test_gen = None
-    # print("in data_generator: lenght of item_Cate_dict: ", len(item_cate_dict))
-    # batch_size = 16
     train_gen = TrainGenerator(model_name, data_path=train_data_path, batch_size= batch_size, num_negs=num_negs, category_dict=item_cate_dict,new_item2cate=new_item2cate,mode=mode, **kwargs)
     valid_gen = TestGenerator(data_path=valid_data_path, item_corpus_path=item_corpus_path, batch_size= batch_size)
     test_gen = TestGenerator(data_path = test_data_path, item_corpus_path = item_corpus_path, batch_size = batch_size)
-
     return train_gen, valid_gen, test_gen
 
-# def train_data_generator(train_data_path, item_sample_rate=None, batch_size=None, num_negs=None, item_cate_dict=dict(), **kwargs):
-#     print("num_negs: ", num_negs)
-#     train_gen = TrainGenerator(data_path=train_data_path, batch_size= batch_size, item_sample_rate=item_sample_rate, num_negs=num_negs, category_dict=item_cate_dict, **kwargs)
-#
-#     return train_gen
+

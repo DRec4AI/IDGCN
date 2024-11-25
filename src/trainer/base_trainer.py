@@ -1,4 +1,3 @@
-
 from src.data_generator import *
 import numpy as np
 import torch
@@ -78,7 +77,7 @@ class BaseTrainer():
 
         #=========build model=========
         model_config["device"] = self.device
-        if model_config["model_name"]=="lightgcn" or model_config["model_name"]=="algcn" or model_config["model_name"] =="pdgcn":
+        if model_config["model_name"]=="lightgcn" or model_config["model_name"]=="algcn":
             model_config["adj_mat"] = adj_mat
         self.model = self.build_model(model_config).to(self.device)
 

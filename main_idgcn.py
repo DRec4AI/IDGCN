@@ -54,8 +54,8 @@ if __name__ == '__main__':
     set_logging()
     dataset_name ="ml-10m"  #choose from 'ml-10m', 'Beauty', 'Music'
     model_name = "idgcn"
-
-    for wei in [0.05]:
+    wei_list = [0.01, 0.05, 0.1, 0.2, 0.5]
+    for wei in wei_list:
         for temp in [0.1]:  #infonce temperature 0.1 constant
             configs_dic = get_configs(dataset_name = dataset_name, model_name = model_name)
             data_config = configs_dic["data_config"]
@@ -76,7 +76,7 @@ if __name__ == '__main__':
             item_cate_size = data_config["cate_num"]
             del model_config["tau"]
             model_config["n_layers"] = model_config["n_layers"]
-            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}.pt"  # 0121,0122 lr=0.001
+            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}.pt"
             trainer_config["save_model_path"] = save_model_path
 
             print(model_config)

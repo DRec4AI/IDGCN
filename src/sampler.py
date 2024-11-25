@@ -133,11 +133,6 @@ class tapast(base_sampler):
 
         rats = model.inference(user_id.repeat(1, 1, 1).T, pool)
 
-        #weight_temp = 0.1
-        #weight = F.softmax(rats.reshape(-1,rats.shape[-1])/ weight_temp, dim=-1)
-        #r_idx = torch.multinomial(weight, 1, replacement=True)    #(batch_size*num_neg, 1)
-        #r_idx = r_idx.reshape(batch_size, -1, 1)
-
         r_v, r_idx = rats.max(dim=-1)
         r_idx = r_idx.unsqueeze(-1)
         return torch.gather(pool, 2, r_idx).squeeze(-1), None #torch.exp(r_v)
@@ -165,33 +160,9 @@ class gain_sampler(base_sampler):
         score_item = self.G[user_id, :].gather(dim=1, index=idx_item)   # (batch_size, num_neg, pool_size)
 
         rats = model.inference(user_id.repeat(1, 1).T, idx_item)    # (batch_size, pool_size)
-
-        #r_v, r_idx = ((score_item - rats)/rats).max(dim=-1)         # (batch_size, num_neg)
         r_v, r_idx = (score_item - rats).topk(dim=-1, k=self.num_neg)  # (batch_size, num_neg)
-
-
 
         # update:
         self.G[user_id, :] = self.G[user_id, :].scatter(1, r_idx, r_v)
-        #self.G[user_id, :][:,idx_item] = rats.squeeze(1)
-
         return torch.gather(idx_item.repeat(batch_size, 1, 1), 2, r_idx.unsqueeze(-1)).squeeze(-1), torch.exp(r_v)
-    """
-    def forward(self, user_id, model=None, **kwargs):
-        batch_size = user_id.shape[0]
-        idx_item = self.pool_id[user_id]
-        score_item =  self.pool_score[user_id]
 
-        #print((user_id.repeat(1, 1, 1).T).shape)
-        #print(idx_item.shape)
-        rats = model.inference(user_id.repeat(1, 1, 1).T, idx_item)
-        #r_v, r_idx = (F.softmax(score_item - rats, dim=-1)*F.softmax(rats, dim=-1)).max(dim=-1)
-        r_v, r_idx = (torch.sigmoid(score_item - rats) * torch.sigmoid(rats)).max(dim=-1)
-        #r_v, r_idx = ((torch.sigmoid(score_item - rats))/(torch.sigmoid(rats)+1.0e-6)).max(dim=-1)
-
-        # update:
-        self.pool_id[user_id] = torch.randint(0, self.num_items, size=(batch_size, self.num_neg, self.pool_size), device=self.device)
-        self.pool_score[user_id] = model.inference(user_id.repeat(1, 1, 1).T, self.pool_id[user_id])
-
-        return torch.gather(idx_item, 2, r_idx.unsqueeze(-1)).squeeze(-1), torch.exp(r_v)
-    """

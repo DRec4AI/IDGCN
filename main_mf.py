@@ -82,8 +82,8 @@ if __name__ == '__main__':
     item_cate_size = data_config["cate_num"]
     del model_config["tau"]
 
-    save_model_path = f"./save_model/{dataset_name}-{model_name}-0130.pt"
-    save_model_path = f"./save_model/{dataset_name}-{model_name}-0229.pt"
+    save_model_path = f"./save_model/{dataset_name}-{model_name}.pt"
+    save_model_path = f"./save_model/{dataset_name}-{model_name}.pt"
     trainer_config["save_model_path"] = save_model_path
     trainer = BaseTrainer(**trainer_config, model_config=model_config, data_config=data_config,
                             item_cate_size=item_cate_size, item_cate_dict=item_cate_dict, new_item2cate=new_item2cate, sample_cate= 4)

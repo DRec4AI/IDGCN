@@ -18,21 +18,7 @@ class MSELoss(nn.Module):
         loss = pos_loss + neg_loss
         return loss.mean()
 
-"""
-class PairwiseLogisticLoss(nn.Module):
-    def __init__(self):
-        super(PairwiseLogisticLoss, self).__init__()
 
-    def forward(self, y_pred, y_true):
-        # :param y_true: Labels
-        # :param y_pred: Predicted result.
-
-        pos_logits = y_pred[:, 0].unsqueeze(-1)
-        neg_logits = y_pred[:, 1:]
-        logits_diff = pos_logits - neg_logits
-        loss = -torch.log(torch.sigmoid(logits_diff)).mean()
-        return loss
-"""
 class PairwiseLogisticLoss(nn.Module):
     def __init__(self):
         super(PairwiseLogisticLoss, self).__init__()
@@ -61,16 +47,10 @@ class BPRLoss(nn.Module):
         :param y_true: Labels
         :param y_pred: Predicted result.
         """
-        # if pos_logits.dim()==1:
-        #     pos_logits = pos_logits.unsqueeze(-1)
-        # if neg_logits.dim()==1:
-        #     neg_logits = neg_logits.unsqueeze(-1)
+
         return torch.mean(F.softplus(neg_score - pos_score))
-        # logits_diff = pos_logits - neg_logits
-        #
-        # loss = -torch.log(torch.sigmoid(logits_diff))
-        # loss = loss.mean()
         return loss
+
 class GumbelLoss(nn.Module):
 
     def __init__(self):
@@ -89,8 +69,6 @@ class GumbelLoss(nn.Module):
         logits_diff = pos_logits - neg_logits
 
         loss = torch.exp(-logits_diff)
-        # loss = -torch.log(torch.sigmoid(logits_diff))
-
 
         reduction = True
         if reduction:
@@ -179,24 +157,6 @@ class UniformLoss(nn.Module):
         ttl_score_user = torch.exp((ttl_score) / temp).sum(dim=1)
         u_i_loss = -torch.log(pos_score / ttl_score_user).mean()
 
-        #ttl_score_user = torch.exp((ttl_score) / temp).sum(dim=0)
-        #u_i_loss = -torch.log(pos_score / ttl_score_user).mean()
-        """
-        pos_u = (anchor * anchor).sum(dim=-1)
-        pos_u = torch.exp(pos_u / temp)
-        M_u = torch.matmul(anchor, anchor.transpose(0, 1))
-        M_u = torch.exp(M_u / temp).sum(dim=1)
-        u_loss = -torch.log(pos_u / M_u).mean()
-
-        pos_i = (items * items).sum(dim=-1)
-        pos_i = torch.exp(pos_i / temp)
-        M_i = torch.matmul(items, items.transpose(0, 1))
-        M_i = torch.exp(M_i / temp).sum(dim=1)
-        i_loss = -torch.log(pos_i / M_i).mean()
-        """
-
-        #loss = (u_loss+i_loss)/2*self.uniform_weight + u_i_loss*(1-self.uniform_weight)
-        #loss = u_loss + i_loss
         return u_i_loss
 
 class DirectAU(nn.Module):
@@ -212,30 +172,16 @@ class DirectAU(nn.Module):
         # items:  [B, dim]
         anchor, items = F.normalize(anchor, dim=-1), F.normalize(items, dim=-1)
 
-        #align_loss = -((anchor*items).sum(dim=-1)/0.1).exp().mean().log()
+
         align_loss = 0
 
         anchor_uni = (torch.matmul(anchor, anchor.transpose(0, 1))/0.1).exp().mean().log()
         items_uni = (torch.matmul(items, items.transpose(0, 1)) / 0.1).exp().mean().log()
-        #anchor_dist = torch.pdist(anchor, p=2).pow(2)
-        #items_dist = torch.pdist(items, p=2).pow(2)
-        #uni_loss = (anchor_dist.mul(-2).exp().mean().log() + items_dist.mul(-2).exp().mean().log()) / 2
 
         uni_loss =  anchor_uni + items_uni
 
         loss = align_loss + uni_loss*self.gamma
-        """
-        anchor, items = F.normalize(anchor, dim=-1), F.normalize(items, dim=-1)
 
-
-        align_loss = (anchor - items).norm(dim=1).pow(2).mean()
-
-        anchor_dist = torch.pdist(anchor, p=2).pow(2)
-        items_dist = torch.pdist(items, p=2).pow(2)
-        uni_loss =  (anchor_dist.mul(-2).exp().mean().log() + items_dist.mul(-2).exp().mean().log())/2
-
-        loss = align_loss + uni_loss*self.gamma
-        """
         return loss
 
 

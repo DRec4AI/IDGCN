@@ -4,7 +4,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = 'True'
 from src.trainer.idgcn_trainer import *
 import pandas as pd
-from src.metrics import  evaluate_metrics, evaluate_metrics_individual
+from src.metrics import  evaluate_metrics
 
 
 def set_logging():
@@ -84,14 +84,13 @@ def evaluate_origianl(dataset_name, model, train_generator, valid_generator, ite
     return val_logs
 
 
-
 if __name__ == '__main__':
     seed_everything()
     set_logging()
     dataset_name ="ml-10m"  #Beauty, ml-10m,Music
     model_name = "idgcn"
-
-    for wei in [0.05]:
+    wei_list = [0.01, 0.05, 0.1, 0.2, 0.5]
+    for wei in wei_list:
         for temp in [0.1]:  #infonce temperature 0.1 constant
             configs_dic = get_configs(dataset_name = dataset_name, model_name = model_name); data_config = configs_dic["data_config"];
             df = pd.read_csv(f"./data/{dataset_name}/item_cate_dict.csv", header=0, sep=",");
@@ -107,7 +106,7 @@ if __name__ == '__main__':
             del model_config["tau"];
             if model_name !="mf":
                 model_config["n_layers"] = model_config["n_layers"];
-            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}-0127.pt";
+            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}.pt";
             train_gen, valid_gen, test_gen = data_generator(model_name=model_name,item_cate_dict=item_cate_dict, new_item2cate=new_item2cate, **data_config);
             saved_model = torch.load(save_model_path)
             evaluate_origianl(dataset_name, saved_model, train_gen, test_gen, item_cate_dict=item_cate_dict)

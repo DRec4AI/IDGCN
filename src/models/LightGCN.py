@@ -1,8 +1,3 @@
-'''
-Created on December 1, 2023
-@author: yahong lian
-'''
-
 import torch
 import torch.nn as nn
 from src.models.base_model import BaseModel
@@ -10,6 +5,7 @@ import torch.nn.functional as F
 from src.util.spmm import SpecialSpmm
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = 'True'
+
 class GraphConv(nn.Module):
     """
     Graph Convolutional Network
@@ -157,28 +153,6 @@ class LightGCN(BaseModel):
         initializer = nn.init.xavier_uniform_
         initializer(self.user_embed.weight)
         initializer(self.item_embed.weight)
-
-
-
-    # def forward(self, user, pos_item, neg_item):
-    #     if user.ndim==1:
-    #         user = user.unsqueeze(1)
-    #     if pos_item.ndim==1:
-    #         pos_item = pos_item.unsqueeze(1)
-    #     if neg_item.ndim==1:
-    #         neg_item = neg_item.unsqueeze(1)
-    #
-    #     self.user_embedding, self.item_embedding = self.gcn(self.user_embed.weight,
-    #                                           self.item_embed.weight,
-    #                                           edge_dropout=False,
-    #                                           mess_dropout=0.5)  #original 0.2
-    #
-    #     self.batch_embeds = [self.user_embed(user), self.item_embed(pos_item), self.item_embed(neg_item)]
-    #     u_e = self.user_tower(user)
-    #     pos_e = self.item_tower(pos_item)
-    #     neg_e = self.item_tower(neg_item)
-    #     return {"embeds": self.batch_embeds,
-    #             "user_vec": u_e, "pos_item_vec": pos_e, "neg_item_vec": neg_e}
 
     def forward(self, user, pos_item, neg_item):
         self.user_embedding, self.item_embedding = self.propagate(
