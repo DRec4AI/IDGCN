@@ -76,7 +76,7 @@ if __name__ == '__main__':
             item_cate_size = data_config["cate_num"]
             del model_config["tau"]
             model_config["n_layers"] = model_config["n_layers"]
-            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}.pt"  # 0121,0122 lr=0.001
+            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}.pt"
             trainer_config["save_model_path"] = save_model_path
 
             print(model_config)

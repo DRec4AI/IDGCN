@@ -25,18 +25,6 @@ def evaluate_metrics(train_user2items,
     metric_callers = []
     max_topk = 0
 
-    # ddf = pd.read_csv(dislike_test_path, sep=",", usecols=["user_id","item_id","label"])
-    # data_dict = dict()
-    # usecols = ["user_id","item_id","label"]
-    # for feature in usecols:
-    #     data_dict[feature] = ddf.loc[:, feature].values
-    # # num_samples = len(list(data_dict.values())[0])
-    #
-    # dislike_user2items_dict = defaultdict(list)
-    # for u_id, i_id in zip(data_dict["user_id"], data_dict["item_id"]):
-    #     dislike_user2items_dict[u_id].append(i_id)
-
-
 
     for metric in metrics:
         metric_callers.append(eval(metric))
@@ -69,33 +57,17 @@ def evaluate_metrics(train_user2items,
                                               sim_matrix=mask_matrix)
 
             true_items_chunk = [valid_user2items[query_index] for query_index in chunk_query_indexes]
-            # true_dislike_item_chunk = [dislike_user2items_dict[query_index] if query_index in dislike_user2items_dict else [] for query_index in chunk_query_indexes]
             if valid_user2items_group != None:
                 group_true_items_chunk = [valid_user2items_group[query_index] for query_index in chunk_query_indexes]
                 result_chunk = [[fn(topk_items, group_true_items, true_items) for fn in [eval("Recall_group(k=20)")]] \
                                 for topk_items, group_true_items, true_items in zip(topk_items_chunk, group_true_items_chunk, true_items_chunk)]
             else:
-                # result_chunk = []
-                # temp_res2 = []
                 for fn in metric_callers:
                     result_chunk = [[fn(topk_items, true_items, item_cate_dict, diverse_weight_batch[uid]) if type(
                                 fn).__name__ == "Coverage" or type(fn).__name__ == "IHC"
                                              else fn(topk_items, true_items) for fn in metric_callers] \
                                             for uid, (topk_items, true_items) in
                                             enumerate(zip(topk_items_chunk, true_items_chunk))]
-            #         if type(fn).__name__ == "Dislike":
-            #             result_chunk = [[fn(topk_items, true_items) for fn in metric_callers if type(fn).__name__ == "Dislike" ] \
-            #                             for uid, (topk_items, true_items) in
-            #                             enumerate(zip(topk_items_chunk, true_dislike_item_chunk))]
-            #         else:
-            #             temp_res2 =[[fn(topk_items, true_items, item_cate_dict, diverse_weight_batch[uid]) if type(
-            #                 fn).__name__ == "Coverage" or type(fn).__name__ == "PAD"
-            #                              else fn(topk_items, true_items) for fn in metric_callers] \
-            #                             for uid, (topk_items, true_items) in
-            #                             enumerate(zip(topk_items_chunk, true_items_chunk))]
-            # for idx, item in enumerate(temp_res2):
-            #      item.extend(result_chunk[idx])
-            # results.extend(temp_res2)
             results.extend(result_chunk)
             pbar.update(1)
 
@@ -104,71 +76,6 @@ def evaluate_metrics(train_user2items,
     return_dict = dict(zip(metrics, average_result))
     print('[Metrics] ' + ' - '.join('{}: {:.6f}'.format(k, v) for k, v in zip(metrics, average_result)))
     return return_dict
-
-
-
-
-def evaluate_metrics_individual(dataset_name,train_user2items,
-                     valid_user2items,
-                     query_indexes,
-                     metrics,
-                     user_embs=None,
-                     item_embs=None,
-                     valid_user2items_group=None,
-                     item_cate_dict = dict(),
-                     diverse_weight = dict(),
-                     dislike_test_path = None,
-                     parallel=False):
-    logging.info("Evaluating metrics for {:d} users...".format(len(user_embs)))
-    metric_callers = []
-    max_topk = 0
-    for metric in metrics:
-        metric_callers.append(eval(metric))
-        max_topk = max(max_topk, int(metric.split("k=")[-1].strip(")")))
-        """
-        try:
-            metric_callers.append(eval(metric))
-            max_topk = max(max_topk, int(metric.split("k=")[-1].strip(")")))
-        except:
-            raise NotImplementedError('metrics={} not implemented.'.format(metric))
-        """
-    #without parallel:
-
-
-
-    results = []
-    num_chunk = 100
-    chunk_size = int(np.ceil(len(user_embs) / float(num_chunk)))
-    with tqdm(total=num_chunk) as pbar:
-        for idx in range(0, len(user_embs), chunk_size):
-            chunk_user_embs = user_embs[idx: (idx + chunk_size), :]
-            diverse_weight_batch = diverse_weight[idx:(idx+chunk_size)]
-            chunk_query_indexes = query_indexes[idx: (idx + chunk_size)]
-            mask_matrix = np.zeros(shape=(chunk_user_embs.shape[0],item_embs.shape[0]))
-            for i, query_index in enumerate(chunk_query_indexes):
-                train_items = train_user2items[query_index]
-                mask_matrix[i, train_items] = -np.inf  # remove clicked items in train data
-
-            topk_items_chunk = evaluate_block(max_topk, chunk_user_embs=chunk_user_embs, item_embs=item_embs,
-                                              sim_matrix=mask_matrix)
-            true_items_chunk = [valid_user2items[query_index] for query_index in chunk_query_indexes]
-            if valid_user2items_group != None:
-                group_true_items_chunk = [valid_user2items_group[query_index] for query_index in chunk_query_indexes]
-                result_chunk = [[fn(topk_items, group_true_items, true_items) for fn in [eval("Recall_group(k=20)")]] \
-                                for topk_items, group_true_items, true_items in zip(topk_items_chunk, group_true_items_chunk, true_items_chunk)]
-            else:
-                for fn in metric_callers:
-
-                    result_chunk = [[fn(topk_items, true_items, item_cate_dict, diverse_weight_batch[uid]) if type(
-                                fn).__name__ == "Coverage" or type(fn).__name__ == "IHC" or type(fn).__name__ == 'Gini' or type(fn).__name__ == "Entropy"
-                                             else fn(topk_items, true_items) for fn in metric_callers] \
-                                            for uid, (topk_items, true_items) in
-                                            enumerate(zip(topk_items_chunk, true_items_chunk))]
-            results.extend(result_chunk)
-            pbar.update(1)
-
-
-
 
 
 #@numba.jit(nopython=True)
@@ -180,8 +87,6 @@ def evaluate_block(max_topk, chunk_user_embs=None, item_embs=None, sim_matrix=No
     sim_matrix = sim_matrix[np.arange(item_indexes.shape[0])[:, None], item_indexes]
     sorted_idxs = np.argsort(-sim_matrix, axis=1)
     topk_items_chunk = item_indexes[np.arange(sorted_idxs.shape[0])[:, None], sorted_idxs]
-
-
 
     return topk_items_chunk
 
@@ -354,18 +259,13 @@ class F1(object):
 class IHC(object):
     def __init__(self, k =1):
         self.hit_k = HitRate(k)
-        # self.ndgc_k = NDCG(k)
         self.coverage = Coverage(k)
-        # self.gini = Gini(k)
+
     def __call__(self, topk_items, true_items, cate, diverse_weight):
         hit = self.hit_k(topk_items, true_items)
-        # ndcg = self.ndgc_k(topk_items, true_items)
-        # gini = self.gini(topk_items, true_items, cate, diverse_weight)
         cate_num = len(set(cate.values()))
-
         cover = self.coverage(topk_items, true_items, cate, diverse_weight) / cate_num
         res = diverse_weight * cover + ( 1 - diverse_weight ) * hit
-        # res = diverse_weight * gini + (1 - diverse_weight) * ndcg
         return res
 
 class DCG(object):
@@ -425,17 +325,6 @@ class HitRate(object):
         hit_rate = 1 if len(hit_items) > 0 else 0
         return hit_rate
 
-class Dislike(object):
-    """Recall metric."""
-
-    def __init__(self, k=1):
-        self.topk = k
-
-    def __call__(self, topk_items, true_dislike_items):
-        topk_items = topk_items[:self.topk]
-        hit_items = set(true_dislike_items) & set(topk_items)
-        recall = len(hit_items) / (len(true_dislike_items) + 1e-12)
-        return recall
 
 class MAP(object):
     """

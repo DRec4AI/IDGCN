@@ -1,4 +1,3 @@
-
 from src.data_generator import *
 import numpy as np
 import torch
@@ -155,12 +154,10 @@ class IDGCNTrainer():
         acc_loss = -(score_pos - score_neg).sigmoid().log()  #(55766)
         diverse_loss = -(diverse_score_pos - diverse_score_neg).sigmoid().log()
 
-        # new_weight = torch.tanh(self.diverse_weight[user_id].to(self.device))
-        # loss_train = (((1 - new_weight).unsqueeze(1) * acc_loss + new_weight.unsqueeze(1) * diverse_loss)).mean()
 
         # ###our methods for diverse weight
         loss_train = (((1 - diverse__).unsqueeze(1) * acc_loss + diverse__.unsqueeze(1) * diverse_loss)).mean()
-        # loss_train = (1.0 * acc_loss).mean()
+
 
         emb_loss = self.get_emb_loss(return_dict["embeds"])
         emb_loss = emb_loss * self.emb_lambda

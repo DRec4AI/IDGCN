@@ -4,7 +4,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = 'True'
 from src.trainer.idgcn_trainer import *
 import pandas as pd
-from src.metrics import  evaluate_metrics, evaluate_metrics_individual
+from src.metrics import  evaluate_metrics
 
 
 def set_logging():
@@ -107,7 +107,7 @@ if __name__ == '__main__':
             del model_config["tau"];
             if model_name !="mf":
                 model_config["n_layers"] = model_config["n_layers"];
-            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}-0127.pt";
+            save_model_path = f"./save_model/{dataset_name}-{model_name}-wei={wei}.pt";
             train_gen, valid_gen, test_gen = data_generator(model_name=model_name,item_cate_dict=item_cate_dict, new_item2cate=new_item2cate, **data_config);
             saved_model = torch.load(save_model_path)
             evaluate_origianl(dataset_name, saved_model, train_gen, test_gen, item_cate_dict=item_cate_dict)
