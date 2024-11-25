@@ -26,7 +26,7 @@ IDGCN
   - models
     - IDGCN.py: proposed model
     - LightGCN.py: LightGCN model
-    - MF.py: mf mode
+    - MF.py: mf model
   - trainer
     - base_trainer.py: trainer module
     - idgcn_trainer.py: idgcn_trainer module
